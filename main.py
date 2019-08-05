@@ -77,6 +77,7 @@ def prediction(initial_graph: Graph, edges_to_add: List[Edge]):
         for edge in best_path:
             edge.flow = edge.flow + min_flow
         current_flow = current_flow + min_flow
+        
     a = 1
 
 
