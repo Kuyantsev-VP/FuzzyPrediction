@@ -15,7 +15,7 @@ class FuzzyNumber:
             return FuzzyNumber(self.l + other.l, self.val + other.val, self.r + other.r)
         # if isinstance(other, Number):
         #     return FuzzyNumber(self.l, self.val + other, self.r)
-        raise TypeError("Object is not a number of fuzzy number.")
+        raise TypeError("Given object to add method is not a fuzzy number.")
 
     def __sub__(self, other):
         if isinstance(other, FuzzyNumber):
@@ -34,8 +34,12 @@ class FuzzyNumber:
     def __eq__(self, other):
         return self.val == other.val and self.l == other.l and self.r == other.r
 
+    def __repr__(self):
+        return f"<{self.l},{self.val},{self.r}>"
+
     def is_explicit(self):
         return self.l == 0 and self.r == 0
 
-    def __repr__(self):
-        return f"<{self.l},{self.val},{self.r}>"
+    def logarithmic_entropy(self):
+        return 0.5 * 0.56 * (self.l + self.r)
+

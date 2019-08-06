@@ -76,6 +76,23 @@ class Graph:
             edge_list.clear()
         self.num_edges = 0
 
+    def total_flow_log_entropy(self):
+        total_l_e = 0
+        for i in range(self.num_vertices):
+            for j in range(len(self.graph[i])):
+                total_l_e = 0 + self.graph[i][j].flow.logarithmic_entropy()
+        return total_l_e
+
+    def get_graph_skeleton(self):
+        g = []
+        for i in range(self.num_vertices):
+            g.append([])
+            for j in range(len(self.graph[i])):
+                g[i].append(0)
+        return g
+
+
+##############################################
 
 def calc_path_distance(gr: Graph, path_as_edges: List[Edge]):
     d = 0
