@@ -1,5 +1,5 @@
 # import numpy as np
-# from main import FuzzyNumber
+from Fuzzy import FuzzyNumber
 #
 # a = [1,2,3]
 # b = (*a,)
@@ -13,15 +13,22 @@
 # g = min(f,v)
 # print(b)
 
-import copy
+# import copy
+#
+# a = [[1,2,3], [4,5,6]]
+# b= copy.deepcopy(a)
+# b[0][0]=666
+# print(a)
+# print(b)
+#
+# c = []
+# c.append([])
+# print(c)
 
-a = [[1,2,3], [4,5,6]]
-b= copy.deepcopy(a)
-b[0][0]=666
-print(a)
-print(b)
+a= FuzzyNumber(1)
+b=FuzzyNumber(2)
+c=FuzzyNumber(3)
 
-c = []
-c.append([])
-print(c)
+print(FuzzyNumber(1.0,10.0,2.0) < FuzzyNumber(0.0,10.0,0.0))
+
 

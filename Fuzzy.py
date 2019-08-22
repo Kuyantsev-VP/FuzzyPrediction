@@ -26,7 +26,7 @@ class FuzzyNumber:
 
     def __lt__(self, other):
         if isinstance(other, FuzzyNumber):
-            return self.val + (self.r - self.r) / 4 < other.val + (other.r - other.l) / 4
+            return self.val + (self.r - self.l) / 4 < other.val + (other.r - other.l) / 4
         # if isinstance(other, Number):
         #     return self.val + (self.r - self.r) / 4 < other
         raise TypeError("Object is not a number of fuzzy number.")
@@ -36,6 +36,9 @@ class FuzzyNumber:
 
     def __repr__(self):
         return f"<{self.l},{self.val},{self.r}>"
+
+    def __str__(self):
+        return f"{self.l},{self.val},{self.r}"
 
     def is_explicit(self):
         return self.l == 0 and self.r == 0
