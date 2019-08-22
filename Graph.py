@@ -1,7 +1,10 @@
-from Fuzzy import *
-from util import *
-from Edge import *
+import os
+from collections import deque
 from typing import List
+
+from Edge import Edge
+from Fuzzy import FuzzyNumber
+from util import *
 
 
 class Graph:
@@ -18,10 +21,12 @@ class Graph:
             n = int(f.readline())
             self.num_vertices = n
             self.graph = [[] for i in range(n)]
+
             m = int(f.readline())
             self.num_edges = m
             self.source = int(f.readline())
             self.sink = int(f.readline())
+            # TODO fix stupid line reading
             for i in range(m):
                 if i == 3:
                     pass
@@ -52,12 +57,15 @@ class Graph:
         edge_copy = edge.__copy__()
         self.graph[edge.vert_from].append(edge_copy)
         self.num_edges += 1
-        return edge_copy
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> List[Edge]:
         return self.graph[item]
 
     def __copy__(self):
+        """
+        Makes a copy of graph. Edges are not copied.
+        :return:
+        """
         copy_instance = Graph()
         copy_instance.num_vertices = self.num_vertices
         copy_instance.num_edges = self.num_edges
@@ -77,6 +85,8 @@ class Graph:
         self.num_edges = 0
 
     def total_flow_log_entropy(self):
+        raise NotImplementedError
+        # TODO it is weird sht
         total_l_e = 0
         for i in range(self.num_vertices):
             for j in range(len(self.graph[i])):
@@ -91,40 +101,88 @@ class Graph:
                 g[i].append(0)
         return g
 
+    def eval_source_flow(self):
+        return sum((e.flow for e in self.graph[self.source]))
+
+    def print_config_file(self, output=None):
+        res = list()
+        res.append(str(self.num_vertices))
+        res.append(str(self.num_edges))
+        res.append(str(self.source))
+        res.append(str(self.sink))
+        for i in range(self.num_vertices):
+            for j in range(len(self.graph[i])):
+                res.append(str(self.graph[i][j]))
+
+        res_str = "\n".join(res)
+        if output:
+            with open(os.path.join(output), 'w') as out:
+                out.write(res_str)
+        else:
+            print(res_str)
+
+    def pretty(self):
+        res = list()
+        res.append("num_vert = " + str(self.num_vertices))
+        res.append("num_edges = " + str(self.num_edges))
+        res.append("source: " + str(self.source))
+        res.append("sink: " + str(self.sink))
+        for i in range(self.num_vertices):
+            res.append(str(i) + ":")
+            for edge in self.graph[i]:
+                res.append("\t " + edge.pretty())
+        return "\n".join(res)
+
 
 ##############################################
 
-def calc_path_distance(gr: Graph, path_as_edges: List[Edge]):
+
+def bfs(gr: Graph, s, t) -> List[Edge]:
+    queue = deque()
+    queue.append(s)
+    visited = [-1] * gr.num_vertices
+
+    iter_counter = 0
+    max_iter = 10000
+
+    while len(queue) > 0:
+        iter_counter += 1
+        assert iter_counter < max_iter, "BFS max iteration count exceeded."
+        u = queue.popleft()
+        for edge in gr[u]:
+            if edge.flow < edge.capacity and visited[edge.vert_to] == -1 and edge.vert_to != s:
+                visited[edge.vert_to] = edge
+                queue.append(edge.vert_to)
+            if edge.vert_to == t:
+                break
+    path = list()
+    if visited[t] != -1:
+        u = t
+        while visited[u] != -1:
+            path.append(visited[u])
+            u = visited[u].vert_from
+        assert u == s, "BFS path does not contain the source."
+    return [x for x in reversed(path)]
+
+
+def calc_path_distance(path_as_edges: List[Edge]):
     d = 0
     for edge in path_as_edges:
         d += edge.weight
     return d
 
 
-def build_residual_graph(gr: Graph):
-    n = gr.num_vertices
-    # res_graph = [[] for i in range(n)]
-    # Copy just for comfortable initialisation. TODO make it right
-    res_graph = gr.__copy__()
-    res_graph.drop_edges()
-    for i in range(n):
-        for j in range(len(gr[i])):
-            current_edge = gr[i][j].__copy__()
-            reverse_edge = current_edge.reverse()
-            if current_edge.flow == FuzzyNumber(0):
-                res_graph.add_edge(current_edge)
-            if current_edge.flow > FuzzyNumber(0) and \
-                    current_edge.flow < current_edge.capacity:
-                res_graph.add_edge(current_edge)
-                res_graph.add_edge(reverse_edge)
-            if current_edge.flow == current_edge.capacity:
-                res_graph.add_edge(reverse_edge)
-    return res_graph
+def str_path(path: List[Edge]):
+    res = [str(path[0].vert_from)]
+    for edge in path:
+        res.append("->")
+        res.append(str(edge.vert_to))
+    return "".join(res)
 
 
-def ford_bellman(gr: Graph, s,  t):
+def ford_bellman(gr: Graph, s, t):
     """
-    Ford bellman algorithm
+    Ford-Bellman algorithm for finding lowest cost path from s to t
     :param gr: graph
     :param s: source
     :param t: sink
@@ -133,9 +191,9 @@ def ford_bellman(gr: Graph, s,  t):
     gr_copy = gr.__copy__()
     # s, t = gr_copy.source, gr_copy.sink
     n = gr_copy.num_vertices
-    d = [INF for i in range(n)]
+    d = [INF] * n
     d[s] = 0
-    p = [-1 for i in range(n)]
+    p = [-1] * n
     while True:
         any_ = False
         for i in range(n):
@@ -164,14 +222,14 @@ def ford_bellman(gr: Graph, s,  t):
 
 def convert_path_to_edges(gr: Graph, path):
     """
-    Tries to build path as graph edges from vertices. If such path cant be made, an exception wiil be thrown.
+    Tries to build path as graph edges from vertices. If such path cant be made, an exception will be thrown.
     :param gr: graph
     :param path: path of vertices
-    :return: path of edges
+    :return: path of edges from graph.
     """
     path_edges = []
     for i, vertex in enumerate(path[0:-1]):
-        next_vertex = path[i+1]
+        next_vertex = path[i + 1]
 
         found = False
         for edge in gr[vertex]:
@@ -182,4 +240,3 @@ def convert_path_to_edges(gr: Graph, path):
             continue
         raise RuntimeError(f"Couldn't find corresponding edge for vertices ({vertex},{next_vertex})")
     return path_edges
-
