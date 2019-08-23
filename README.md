@@ -1,2 +1,2 @@
 # FuzzyPrediction
-Repo for masters's degree dissertation
+Algorithm for defuzzyfication of fuzzy graph.
